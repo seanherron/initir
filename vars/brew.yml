@@ -1,0 +1,36 @@
+---
+download_dir: ~/.ansible-downloads/
+cask_appdir: /Applications
+
+brew_taps:
+  - "caskroom/versions"
+  - "caskroom/fonts"
+
+homebrew_packages:
+  - {name: 'wget', options: '--with-iri'}
+  - {name: 'vim', options: '--override-system-vi'}
+  - {name: 'gnu-sed', options: '--default-names'}
+  - {name: 'grep', options: '', source: 'homebrew/dupes'}
+  - {name: 'screen', options: '', source: 'homebrew/dupes'}
+  - {name: 'nmap', options: ''}
+  - {name: 'tree', options: ''}
+  - {name: 'webkit2png', options: ''}
+  - {name: 'duplicity', options: ''}
+  - {name: 'go', options: ''}
+  - {name: 'mercurial', options: ''}
+  - {name: 'brew-cask', options: '', source: 'caskroom/cask'}
+  - {name: 'zsh', options: ''}
+  - {name: 'openssl', options: ''}
+
+cask_packages:
+  - {name: 'google-chrome', options: ''}
+  - {name: 'rdio', options: ''}
+  - {name: 'sublime-text3', options: ''}
+  - {name: 'karabiner', options: ''}
+  - {name: 'gpgtools', options: ''}
+  - {name: 'spectacle', options: ''}
+  - {name: 'vagrant', options: ''}
+  - {name: 'virtualbox', options: ''}
+  - {name: 'slack', options: ''}
+  - {name: 'adium', options: ''}
+  - {name: 'openzfs', options: ''}

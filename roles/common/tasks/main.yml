@@ -1,0 +1,10 @@
+---
+
+- name: I like to have a ~/Projects folder
+  file: path=~/Projects state=folder
+
+- name: Within that folder make sure work/personal division exists
+  file: path=~/Projects/{{ item }} state=folder
+  with_items:
+    - Personal
+    - Work

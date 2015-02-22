@@ -1,0 +1,23 @@
+---
+
+- name: Install pyenv
+  git: repo=https://github.com/yyuu/pyenv.git dest=~/.pyenv
+
+- name: Install pyenv plugins
+  git: repo=https://github.com/yyuu/{{ item }}.git dest=~/.pyenv/plugins/{{ item }}
+  with_items: pyenv_plugins
+
+- name: Ensure pyenv PATH is loaded
+  lineinfile: dest=~/.zshenv line="export PATH=$HOME/.pyenv/bin:$PATH"
+
+- name: Ensure pyenv eval is loaded
+  lineinfile: dest=~/.zshenv line='eval "$(pyenv init -)"'
+
+- name: Ensure pyenv-virtualenv is loaded
+  lineinfile: dest=~/.zshenv line='eval "$(pyenv virtualenv-init -)"'
+
+- name: Install Python interpreters
+  shell: '. ~/.zshenv && pyenv install {{ item }}'
+  args:
+    creates: ~/.pyenv/versions/{{ item }}
+  with_items: pyenv_python_versions

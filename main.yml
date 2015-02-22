@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  connection: local
+
+  vars_files:
+    - vars/brew.yml
+    - vars/defaults.yml
+    - vars/fonts.yml
+    - vars/pyenv.yml
+    - vars/sublime-text-3.yml
+
+  roles:
+    - homebrew
+    - defaults
+    - karabiner
+    - oh-my-zsh
+    - pyenv
+    - sublime-text-3

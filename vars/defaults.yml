@@ -1,0 +1,517 @@
+---
+
+###############################################################################
+# General UI/UX                                                               #
+###############################################################################
+
+# Set computer name (as done via System Preferences → Sharing)
+ComputerName: Endeavour
+
+# Set Host Name
+HostName: "{{ ComputerName }}"
+
+# Set Local Host Name
+LocalHostName: "{{ ComputerName }}"
+
+# Set NetBIOS Name
+NetBIOSName: "{{ ComputerName }}"
+
+# Set standby delay (default is 1 hour)
+StandbyDelay: "3600"
+
+# Disable the sound effects on boot when True
+DisableBootSoundEffects: false
+
+# Disable transparency in the menu bar and elsewhere on Yosemite when 0, Enable Transparancy when 1
+MenuBarTransparency: "0"
+
+# Set sidebar icon size
+# 1 = Small, 2 = Medium, 3 = Large
+NSTableViewDefaultSizeMode: "2"
+
+# Show scrollbars
+AppleShowScrollBars: "Always"
+# Possible values: `WhenScrolling`, `Automatic` and `Always`
+
+# Enable smooth scrolling
+# (if you’re on an older Mac that messes up the animation, set to false)
+NSScrollAnimationEnabled: "1"
+
+# Window resize speed for Cocoa applications
+NSWindowResizeTime: "0.001"
+
+# Expand save panel by default
+NSNavPanelExpandedStateForSaveMode: "1"
+
+# Expand print panel by default
+PMPrintingExpandedStateForPrint: "1"
+
+# Save to disk (not to iCloud) by default
+NSDocumentSaveNewDocumentsToCloud: "0"
+
+# Automatically quit printer app once the print jobs complete
+PrintingPrefsQuitWhenFinished: "1"
+
+# Set to "0" to disable the “Are you sure you want to open this application?” dialog
+LSQuarantine: "0"
+
+# Set to "0" to disable Resume system-wide
+NSQuitAlwaysKeepsWindows: "0"
+
+# Set to "1" to disable automatic termination of inactive apps
+NSDisableAutomaticTermination: "1"
+
+# Display ASCII control characters using caret notation in standard text views
+# Try e.g. `cd /tmp; unidecode "\x{0000}" > cc.txt; open -e cc.txt`
+NSTextShowsControlCharacters: "1"
+
+# Enable/Disable the Crash Reporter
+CrashReporterDisabled: false
+
+# Set Help Viewer windows to non-floating mode
+HelpViewerDevMode: "0"
+
+# Reveal IP address, hostname, OS version, etc. when clicking the clock
+# in the login window
+LoginWindowHostInfo: true
+
+# Restart automatically if the computer freezes
+# Set to "Off" to disable
+SetRestartFreeze: "On"
+
+# Set to "Off" to never go into computer sleep mode
+SetComputerSleepMinutes: "5"
+
+# Check for software updates frequency
+# This is daily frequency, eg. 1=once per day, 2=every other day, 7=once per week
+SoftwareUpdateScheduleFrequency: "1"
+
+# Disable Notification Center and remove the menu bar icon
+DisableNotificationCenter: false
+
+# Disable smart quotes as they’re annoying when typing code
+NSAutomaticQuoteSubstitutionEnabled: "0"
+
+# Disable smart dashes as they’re annoying when typing code
+NSAutomaticDashSubstitutionEnabled: "0"
+
+###############################################################################
+# SSD-specific tweaks                                                         #
+###############################################################################
+
+# Set to true if you have OS X Installed on an SSD
+#
+# This will do several things:
+# A) Disable local time machine snapshots
+# B) Disable Hibernation
+# C) Remove the sleep image file to save disk space
+# D) Disable the sudden motion sensor as it’s not useful for SSDs
+SSDPresent: true
+
+###############################################################################
+# Trackpad, mouse, keyboard, Bluetooth accessories, and input                 #
+###############################################################################
+
+# Trackpad: enable tap to click for this user and for the login screen
+# Set to "0" and "0" to disable
+TrackpadClicking: "1"
+TapBehavior: "1"
+
+# Trackpad: map bottom right corner to right-click
+TrackpadCornerSecondaryClick: "2"
+TrackpadRightClick: "1"
+TrackpadCornerClickBehavior: "1"
+EnableSecondaryClick: "1"
+
+# Set to "0" to disable “natural” (Lion-style) scrolling
+SwipeScrollDirection: "0"
+
+# Increase sound quality for Bluetooth headphones/headsets
+BluetoothAudioAgentAppleBitpoolMin: "40"
+
+# Enable full keyboard access for all controls
+# (e.g. enable Tab in modal dialogs)
+AppleKeyboardUIMode: "3"
+
+# Use scroll gesture with the Ctrl (^) modifier key to zoom
+CloseViewScrollWheelToggle: "1"
+HIDScrollZoomModifierMask: "262144"
+
+# Follow the keyboard focus while zoomed in
+CloseViewZoomFollowsFocus: "1"
+
+# Disable press-and-hold for keys in favor of key repeat
+ApplePressAndHoldEnabled: "0"
+
+# Set a blazingly fast keyboard repeat rate
+KeyRepeat: "0"
+
+# Set language and text formats
+# Note: if you’re in the US, replace `EUR` with `USD`, `Centimeters` with
+# `Inches`, `en_GB` with `en_US`, and `true` with `false`.
+AppleLanguages: "en"
+AppleLocale: "en_US@currency=USD"
+AppleMeasurementUnits: "Centimeters"
+AppleMetricUnits: "1"
+
+# Set the timezone; see `sudo systemsetup -listtimezones` for other values
+Timezone: "America/New_York"
+
+# Disable auto-correct
+NSAutomaticSpellingCorrectionEnabled: "0"
+
+# Stop iTunes from responding to the keyboard media keys
+StopiTunesKeyboardRespose: true
+
+###############################################################################
+# Screen                                                                      #
+###############################################################################
+
+# Require password immediately after sleep or screen saver begins
+AskForPassword: "1"
+AskForPasswordDelay: "0"
+
+# Save screenshots location
+ScreenCaptureLocation: "${HOME}/Desktop"
+
+# Save screenshot format
+# Options: PNG, BMP, GIF, JPG, PDF, TIFF
+ScreenCaptureType: "png"
+
+# Disable shadow in screenshots
+ScreenCaptureDisableShadow: "1"
+
+# Enable subpixel font rendering on non-Apple LCDs
+AppleFontSmoothing: "2"
+
+# Enable HiDPI display modes (requires restart)
+DisplayResolutionEnabled: "1"
+
+###############################################################################
+# Finder                                                                      #
+###############################################################################
+
+# Finder: set true to allow quitting via ⌘ + Q; doing so will also hide desktop icons
+FinderQuitMenuItem: "0"
+
+# Finder: disable window animations and Get Info animations
+FinderDisableAllAnimations: "1"
+
+# Set default location for new Finder windows
+# For desktop, use `PfDe` and `file:///${HOME}/Desktop/
+# For other paths, use `PfLo` and `file:///full/path/here/`
+FinderNewWindowTarget: "PfLo"
+FinderNewWindowTargetPath: "file://${HOME}/"
+
+# Show icons for hard drives, servers, and removable media on the desktop
+ShowExternalHardDrivesOnDesktop: "1"
+ShowHardDrivesOnDesktop: "1"
+ShowMountedServersOnDesktop: "1"
+ShowRemovableMediaOnDesktop: "1"
+
+# Finder: show hidden files by default
+AppleShowAllFiles: "1"
+
+# Finder: show all filename extensions
+AppleShowAllExtensions: "1"
+
+# Finder: always show status bar
+FinderShowStatusBar: "1"
+
+# Finder: show path bar
+FinderShowPathbar: "1"
+
+# Finder: allow text selection in Quick Look
+QLEnableTextSelection: "1"
+
+# Display full POSIX path as Finder window title
+FinderShowPosixPathInTitle: "1"
+
+# When performing a search, search the current folder by default
+FinderDefaultSearchScope: "SCcf"
+
+# Disable the warning when changing a file extension
+FXEnableExtensionChangeWarning: "0"
+
+# Enable spring loading for directories
+FinderSpringingEnabled: "1"
+
+# Set the spring loading delay for directories
+FinderSpringingDelay: "0"
+
+# Avoid creating .DS_Store files on network volumes
+DSDontWriteNetworkStores: "1"
+
+# Disable disk image verification
+DisableDiskImageVerification: "1"
+
+# Automatically open a new Finder window when a volume is mounted
+FinderAutoOpenWindowWhenMounted: "1"
+
+# Show item info near icons on the desktop and in other icon views
+FinderShowItemInfoNearIcons: "0"
+
+# Show item info to on the bottom of the icons on the desktop
+# "1" will show them to the right of the icon
+ShowItemInfoOnBottomOfDesktopIcon: "1"
+
+# Enable snap-to-grid for icons on the desktop and in other icon views
+IconViewSettingsArrangeBy: "grid"
+
+# Set Spacing of icons on Desktop and in other icon views
+IconViewSettingsGridSpacing: "100"
+
+# Set the size of icons on the desktop and in other icon views
+IconViewSettingsIconSize: "80"
+
+# Set Default Finder View
+# Four-letter codes for view modes: `Nlsv`, `icnv`, `clmv`, `Flwv`
+FinderDefaultViewType: 'Nlsv'
+
+# Disable the warning before emptying the Trash
+WarnOnEmptyTrash: "0"
+
+# Empty Trash securely by default
+EmptyTrashSecurely: "1"
+
+# Enable AirDrop over Ethernet and on unsupported Macs running Lion
+EnableAirDropOverEthernet: "1"
+
+# Enable the MacBook Air SuperDrive on any Mac
+EnableSuperDrive: "1"
+
+# Show the ~/Library folder by default
+ShowLibraryFolder: true
+
+# Enable Default Panes Open on Finder "Get Info" Panels
+FinderGetInfoGeneral: "1"
+FinderGetInfoMetaData: "0"
+FinderGetInfoName: "0"
+FinderGetInfoPreview: "0"
+FinderGetInfoOpenWith: "1"
+FinderGetInfoPrivileges: "1"
+
+###############################################################################
+# Dock, Dashboard, and hot corners                                            #
+###############################################################################
+
+# Enable highlight hover effect for the grid view of a stack (Dock)
+DockMouseOverHiliteStack: "1"
+
+# Set the icon size of Dock items in pixels
+DockTileSize: "64"
+
+# Set the minimize/maximize window effect
+DockMinEffect: "scale"
+
+# Minimize windows into their application’s icon
+DockMinimizeToApplicationIcon: "1"
+
+# Enable spring loading for all Dock items
+DockSpringLoadAllItems: "1"
+
+# Show indicator lights for open applications in the Dock
+DockShowProcessIndicators: "1"
+
+# Wipe all (default) app icons from the Dock
+# This is only really useful when setting up a new Mac, or if you don’t use
+# the Dock to launch apps.
+DockWipeAllDefaultAppIcons: false
+
+# Don’t animate opening applications from the Dock
+DockLaunchAnimation: "0"
+
+# Speed up Mission Control animations
+MissionControlAnimationDuration: "0.1"
+
+# Don’t group windows by application in Mission Control
+# (i.e. use the old Exposé behavior instead)
+ExposeGroupByApp: "0"
+
+# Disable Dashboard
+DashboardDisable: "1"
+
+# Don’t show Dashboard as a Space
+DashboardInOverlay: "1"
+
+# Don’t automatically rearrange Spaces based on most recent use
+ArrangeSpacesByRecentUse: "0"
+
+# Set the auto-hiding Dock delay
+DockAutohideDelay: "0"
+
+# Set animation speed when hiding/showing the Dock
+# 0 removes it
+DockAutohideTime: "0.01"
+
+# Automatically hide and show the Dock
+DockAutoHide: "1"
+
+# Make Dock icons of hidden applications translucent
+DockShowHidden: "1"
+
+# Disable the Launchpad gesture (pinch with thumb and three fingers)
+LaunchpadGestureEnabled: "0"
+
+# Hot corners
+# Possible values:
+#  0: no-op
+#  2: Mission Control
+#  3: Show application windows
+#  4: Desktop
+#  5: Start screen saver
+#  6: Disable screen saver
+#  7: Dashboard
+# 10: Put display to sleep
+# 11: Launchpad
+# 12: Notification Center
+TopLeftHotCorner: "2"
+TopRightHotCorner: "4"
+BottomLeftHotCorner: "5"
+BottomRightHotCorner: "0"
+
+###############################################################################
+# Safari & WebKit                                                             #
+###############################################################################
+
+# Privacy: don’t send search queries to Apple
+SafariUniversalSearchEnabled: "0"
+
+# Press Tab to highlight each item on a web page
+SafariTabToLink: "1"
+
+# Show the full URL in the address bar (note: this still hides the scheme)
+SafariShowFullURLInSmartSearchField: "1"
+
+# Set Safari’s home page to `about:blank` for faster loading
+SafariHomePage: "about:blank"
+
+# Prevent Safari from opening ‘safe’ files automatically after downloading
+SafaiAutoOpenSafeDownloads: "0"
+
+# Allow hitting the Backspace key to go to the previous page in history
+SafariWebKit2BackspaceKeyNavigationEnabled: "1"
+
+# Hide Safari’s bookmarks bar by default
+SafariShowFavoritesBar: "0"
+
+# Hide Safari’s sidebar in Top Sites
+SafariShowSidebarInTopSites: "0"
+
+# Disable Safari’s thumbnail cache for History and Top Sites
+SafariDebugSnapshotsUpdatePolicy: true
+
+# Enable Safari's debug menu
+SafariEnableDebugMenu: "1"
+
+# Make Safari’s search banners default to Contains instead of Starts With
+SafariFindOnPageMatchesWordStartsOnly: "0"
+
+# Remove useless icons from Safari’s bookmarks bar
+SafariProxiesInBookmarksBar: "()"
+
+# Enable Sarari Develop/Web Inspector
+SafariDeveloperMode: "1"
+
+# Add a context menu item for showing the Web Inspector in web views
+SafariWebKitDeveloperExtras: "1"
+
+###############################################################################
+# Mail                                                                        #
+###############################################################################
+
+# Disable send and reply animations in Mail.app
+MailDisableAnimations: "1"
+
+# Copy email addresses as `foo@example.com` instead of `Foo Bar <foo@example.com>` in Mail.app
+MailAddressesIncludeNameOnPasteboard: "0"
+
+# Add the keyboard shortcut ⌘ + Enter to send an email in Mail.app
+MailSendKeyboardShortcut: "@\\U21a9"
+MailSendKeyboardShortcutAppended: "U21a9"
+
+# Display emails in threaded mode, sorted by date (oldest at the top)
+MailDisplayInThreadedMode: "yes"
+MailSortDescending: "yes"
+MailSortOrder: "received-date"
+
+# Disable inline attachments (just show the icons)
+MailDisableInlineAttachmentViewing: "1"
+
+# Disable automatic spell checking
+MailSpellCheckingBehavior: "NoSpellCheckingEnabled"
+
+###############################################################################
+# Terminal                                                                    #
+###############################################################################
+
+# Only use UTF-8 in Terminal.app
+TerminalUTF8: true
+
+###############################################################################
+# Time Machine                                                                #
+###############################################################################
+
+# Prevent Time Machine from prompting to use new hard drives as backup volume
+TimeMachineDoNotOfferNewDisksForBackup: "1"
+
+# Disable local Time Machine backups
+TimeMachineDisableLocalBackups: true
+
+###############################################################################
+# Activity Monitor                                                            #
+###############################################################################
+
+# Show the main window when launching Activity Monitor
+ActivityMonitorOpenMainWindow: "1"
+
+# Visualize CPU usage in the Activity Monitor Dock icon
+ActivityMonitorIconType: "5"
+
+# Show all processes in Activity Monitor
+ActivityMonitorShowCategory: "0"
+
+# Sort Activity Monitor results by CPU usage
+ActivityMonitorSortColumn: "CPUUsage"
+
+###############################################################################
+# Address Book, Dashboard, iCal, TextEdit, and Disk Utility                   #
+###############################################################################
+
+# Enable the debug menu in Address Book
+AddressBookShowDebugMenu: "1"
+
+# Enable Dashboard dev mode (allows keeping widgets on the desktop)
+DashboardDevMode: "1"
+
+# Use plain text mode for new TextEdit documents
+TextEditRichText: "0"
+
+# Open and save files as UTF-8 in TextEdit
+TextEditPlainTextEncoding: "4"
+
+# Enable the debug menu in Disk Utility
+DiskUtilityDebugMenu: "1"
+
+###############################################################################
+# Mac App Store                                                               #
+###############################################################################
+
+# Enable the WebKit Developer Tools in the Mac App Store
+AppStoreWebKitDeveloperExtras: "1"
+
+# Enable Debug Menu in the Mac App Store
+AppStoreShowDebugMenu: "1"
+
+###############################################################################
+# Messages                                                                    #
+###############################################################################
+
+# Disable automatic emoji substitution (i.e. use plain text smileys)
+MessagesAutoEmojiSubstitution: "0"
+
+# Disable smart quotes as it’s annoying for messages that contain code
+MessagesAutoQuoteSubstitution: "0"
+
+# Disable continuous spell checking
+MessagesSpellChecking: "0"

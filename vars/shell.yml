@@ -1,0 +1,5 @@
+---
+
+# This will be a list of things to make sure are loaded in to shell
+shell_init:
+  - ""

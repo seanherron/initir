@@ -1,0 +1,38 @@
+---
+
+- name: Check to see if homebrew has installed zsh
+  stat: path=/usr/local/bin/zsh
+  register: brewed_zsh
+
+- name: Get the name of the current shell
+  command: echo $SHELL
+  register: current_shell
+  changed_when: False
+
+- name: Ensure the proper zsh is in /etc/shells
+  lineinfile: dest=/etc/shells line=/usr/local/bin/zsh
+  sudo: yes
+  when: brewed_zsh.stat.exists
+
+- name: Check to see if oh-my-zsh exists
+  stat: path=~/.oh-my-zsh
+  register: oh_my_zsh
+
+- name: Clone the oh-my-zsh repo
+  git: repo=https://github.com/robbyrussell/oh-my-zsh.git dest=~/.oh-my-zsh
+
+- name: Create the zshenv file
+  file: path=~/.zshenv state=touch
+
+- name: Ensure the zshrc file is present
+  template: src=zshrc.zsh-template.j2 dest=~/.zshrc
+
+- name: Ensure zsh is the correct shell (if brewed)
+  command: "chsh -s /usr/local/bin/zsh"
+  sudo: yes
+  when: brewed_zsh.stat.exists and '/usr/local/bin/zsh' not in current_shell.stdout
+
+- name: Ensure zsh is the correct shell (if not brewed)
+  command: "chsh -s /bin/zsh"
+  sudo: yes
+  when: not brewed_zsh.stat.exists and '/bin/zsh' not in current_shell.stdout

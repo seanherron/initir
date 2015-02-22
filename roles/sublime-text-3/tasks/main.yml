@@ -1,0 +1,14 @@
+---
+
+- name: Ensure Sublime Directory exists
+  file: path=~/.sublime/Packages/User state=directory
+
+- name: Symbolic link from Sublime App Support to ~/.sublime
+  file: src=~/.sublime/Packages dest=~/Library/Application\ Support/Sublime\ Text\ 3/Packages state=link force=yes
+
+- name: Install Ansible Packages
+  git: repo={{ item.url }} dest=~/.sublime/Packages/{{ item.name }}
+  with_items: sublime_text_packages
+
+- name: Install Sublime Settings
+  template: src=Preferences.sublime-settings.j2 dest=~/.sublime/Packages/User/Preferences.sublime-settings

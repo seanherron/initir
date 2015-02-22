@@ -1,0 +1,996 @@
+---
+
+- name: Read defaults
+  command: "defaults read"
+  register: appledefaults
+  changed_when: False
+
+- name: Read Activity Monitor Defaults
+  command: "defaults read com.apple.ActivityMonitor"
+  register: apple_activity_monitor_defaults
+  changed_when: False
+
+- name: Get all loaded plists
+  command: "launchctl list"
+  register: loaded_plists
+  changed_when: False
+
+- name: Check if localbackups are enabled
+  command: "ls -lO /.MobileBackups"
+  changed_when: False
+  register: mobilebackups
+  ignore_errors: True
+
+###############################################################################
+# General UI/UX                                                               #
+###############################################################################
+
+- name: "Get the current computer name"
+  command: "scutil --get ComputerName"
+  register: current_computername
+  changed_when: False
+
+- name: "Set computer name (as done via System Preferences → Sharing)"
+  command: "scutil --set ComputerName {{ ComputerName }}"
+  sudo: yes
+  when: "'{{ ComputerName }}' not in current_computername.stdout"
+
+- name: "Get the current host name"
+  command: "scutil --get HostName"
+  register: current_hostname
+  changed_when: False
+
+- name: "Set HostName"
+  command: "scutil --set HostName {{ HostName }}"
+  sudo: yes
+  when: "'{{ HostName }}' not in current_hostname.stdout"
+
+- name: "Get the current LocalHostName"
+  command: "scutil --get LocalHostName"
+  register: current_localhostname
+  changed_when: False
+
+- name: "Set LocalHostName"
+  command: "scutil --set LocalHostName {{ LocalHostName }}"
+  sudo: yes
+  when: "'{{ LocalHostName }}' not in current_localhostname.stdout"
+
+- name: "Get the current NetBIOSName"
+  command: "defaults read /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName"
+  register: current_netbiosname
+  changed_when: False
+
+- name: "Set NetBIOSName"
+  command: "defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string {{ NetBIOSName }}"
+  sudo: yes
+  when: "'{{ NetBIOSName }}' not in current_netbiosname.stdout"
+
+- name: Get pmset settings
+  command: "pmset -g"
+  register: pmset
+  changed_when: False
+
+- name: Get pmset capabilities
+  command: "pmset -g cap"
+  register: pmset_capabilities
+  changed_when: False
+
+- name: "Set standby delay to 24 hours (default is 1 hour)"
+  command: "pmset -a standbydelay {{ StandbyDelay }}"
+  sudo: yes
+  when: "'standby' in pmset.stdout"
+
+- name: "Get the current systemaudiovolume"
+  command: nvram SystemAudioVolume
+  register: SystemAudioVolume
+  failed_when: "'NEVERRETURNASFAIL' in SystemAudioVolume.stderr"
+  changed_when: False
+
+- name: "Disable the sound effects on boot"
+  command: 'nvram -d SystemAudioVolume'
+  sudo: yes
+  when: DisableBootSoundEffects and 'Error getting variable' not in SystemAudioVolume.stdout
+
+- name: "Enable sound effects on boot"
+  command: 'nvram SystemAudioVolume="5"'
+  sudo: yes
+  when: not DisableBootSoundEffects and '5' not in SystemAudioVolume.stdout
+
+- name: "Set transparency in the menu bar and elsewhere on Yosemite"
+  command: "defaults write com.apple.universalaccess reduceTransparency -int {{ MenuBarTransparency }}"
+  when: "'reduceTransparency = {{ MenuBarTransparency }}' not in appledefaults.stdout"
+
+- name: "Set sidebar icon size"
+  command: "defaults write NSGlobalDomain NSTableViewDefaultSizeMode -int {{ NSTableViewDefaultSizeMode }}"
+  when: "'NSTableViewDefaultSizeMode = {{ NSTableViewDefaultSizeMode }}' not in appledefaults.stdout"
+
+- name: "Always show scrollbars"
+  command: "defaults write NSGlobalDomain AppleShowScrollBars -string {{ AppleShowScrollBars }}"
+  when: "'AppleShowScrollBars = {{ AppleShowScrollBars }}' not in appledefaults.stdout"
+# Possible values: `WhenScrolling`, `Automatic` and `Always`
+
+- name: "Disable smooth scrolling"
+  command: "defaults write NSGlobalDomain NSScrollAnimationEnabled -int {{ NSScrollAnimationEnabled }}"
+  when: "'NSScrollAnimationEnabled = {{ NSScrollAnimationEnabled }}' not in appledefaults.stdout"
+# (if you’re on an older Mac that messes up the animation)
+
+- name: "Increase window resize speed for Cocoa applications"
+  command: "defaults write NSGlobalDomain NSWindowResizeTime -float {{ NSWindowResizeTime }}"
+  when: "'NSWindowResizeTime = \"{{ NSWindowResizeTime }}\"' not in appledefaults.stdout"
+
+- name: "Expand save panel by default (mode 1)"
+  command: "defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -int {{ NSNavPanelExpandedStateForSaveMode }}"
+  when: "'NSNavPanelExpandedStateForSaveMode = {{ NSNavPanelExpandedStateForSaveMode }}' not in appledefaults.stdout"
+
+- name: "Expand save panel by default (mode 2)"
+  command: "defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -int {{ NSNavPanelExpandedStateForSaveMode }}"
+  when: "'NSNavPanelExpandedStateForSaveMode2 = {{ NSNavPanelExpandedStateForSaveMode }}' not in appledefaults.stdout"
+
+- name: "Expand print panel by default (mode 1)"
+  command: "defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -int {{ PMPrintingExpandedStateForPrint }}"
+  when: "'PMPrintingExpandedStateForPrint = {{ PMPrintingExpandedStateForPrint }}' not in appledefaults.stdout"
+
+- name: "Expand print panel by default (mode 2)"
+  command: "defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -int {{ PMPrintingExpandedStateForPrint }}"
+  when: "'PMPrintingExpandedStateForPrint2 = {{ PMPrintingExpandedStateForPrint }}' not in appledefaults.stdout"
+
+- name: "Save to disk (not to iCloud) by default"
+  command: "defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -int {{ NSDocumentSaveNewDocumentsToCloud }}"
+  when: "'NSDocumentSaveNewDocumentsToCloud = {{ NSDocumentSaveNewDocumentsToCloud }}' not in appledefaults.stdout"
+
+- name: Read Printing Prefs Default
+  command: "defaults read com.apple.print.PrintingPrefs"
+  register: apple_printing_prefs
+  changed_when: False
+
+- name: "Automatically quit printer app once the print jobs complete"
+  command: 'defaults write com.apple.print.PrintingPrefs "Quit When Finished" -int {{ PrintingPrefsQuitWhenFinished }}'
+  when: "'\"Quit When Finished\" = {{ PrintingPrefsQuitWhenFinished }}' not in apple_printing_prefs.stdout"
+
+- name: "Disable the “Are you sure you want to open this application?” dialog"
+  command: "defaults write com.apple.LaunchServices LSQuarantine -int {{ LSQuarantine }}"
+  when: "'LSQuarantine = {{ LSQuarantine }}' not in appledefaults.stdout"
+
+- name: "Remove duplicates in the “Open With” menu"
+  command: "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user"
+  changed_when: False
+
+- name: "Display ASCII control characters using caret notation in standard text views"
+  command: "defaults write NSGlobalDomain NSTextShowsControlCharacters -int {{ NSTextShowsControlCharacters }}"
+  when: "'NSTextShowsControlCharacters = {{ NSTextShowsControlCharacters }}' not in appledefaults.stdout"
+# Try e.g. `cd /tmp; unidecode "\x{0000}" > cc.txt; open -e cc.txt`
+
+- name: "Disable Resume system-wide"
+  command: "defaults write com.apple.systempreferences NSQuitAlwaysKeepsWindows -int {{ NSQuitAlwaysKeepsWindows }}"
+  when: "'NSQuitAlwaysKeepsWindows = {{ NSQuitAlwaysKeepsWindows }}' not in appledefaults.stdout"
+
+- name: "Disable automatic termination of inactive apps"
+  command: "defaults write NSGlobalDomain NSDisableAutomaticTermination -int {{ NSDisableAutomaticTermination }}"
+  when: "'NSDisableAutomaticTermination = {{ NSDisableAutomaticTermination }}' not in appledefaults.stdout"
+
+- name: "Disable the crash reporter"
+  command: defaults write com.apple.CrashReporter DialogType -string "none"
+  when: CrashReporterDisabled
+
+- name: "Set Help Viewer windows to non-floating mode"
+  command: "defaults write com.apple.helpviewer DevMode -int {{ HelpViewerDevMode }}"
+  when: "'DevMode = {{ HelpViewerDevMode }}' not in appledefaults.stdout"
+
+- name: "Read Login Window Defaults"
+  command: "defaults read /Library/Preferences/com.apple.loginwindow AdminHostInfo"
+  register: apple_login_window_prefs
+  changed_when: False
+
+- name: "Reveal IP address, hostname, OS version, etc. when clicking the clock in the login window"
+  command: "defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName"
+  sudo: yes
+  when: LoginWindowHostInfo and 'HostName' not in apple_login_window_prefs.stdout
+
+- name: "Get Restart/Freeze Status"
+  command: "systemsetup -getrestartfreeze"
+  register: restartfreeze
+  sudo: yes
+  changed_when: False
+
+- name: "Restart automatically if the computer freezes"
+  command: "systemsetup -setrestartfreeze {{ SetRestartFreeze }}"
+  sudo: yes
+  when: "'{{ SetRestartFreeze }}' not in restartfreeze.stdout"
+
+- name: "Get Computer Sleep Status"
+  command: "systemsetup -getcomputersleep"
+  sudo: yes
+  register: computersleep
+  changed_when: False
+
+- name: "Never go into computer sleep mode"
+  command: "systemsetup -setcomputersleep {{ SetComputerSleepMinutes }} > /dev/null"
+  sudo: yes
+  when: "'{{ SetComputerSleepMinutes }}' not in computersleep.stdout"
+
+- name: "Check for software updates frequency"
+  command: "defaults write com.apple.SoftwareUpdate ScheduleFrequency -int {{ SoftwareUpdateScheduleFrequency }}"
+  when: "'ScheduleFrequency = {{ SoftwareUpdateScheduleFrequency }}' not in appledefaults.stdout"
+
+- name: "Disable Notification Center and remove the menu bar icon"
+  command: launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist 2> /dev/null
+  when: DisableNotificationCenter and 'com.apple.notificationcenterui' not in loaded_plists.stdout
+
+- name: "Disable smart quotes as they’re annoying when typing code"
+  command: "defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -int {{ NSAutomaticQuoteSubstitutionEnabled }}"
+  when: "'NSAutomaticQuoteSubstitutionEnabled = {{ NSAutomaticQuoteSubstitutionEnabled }}' not in appledefaults.stdout"
+
+- name: "Disable smart dashes as they’re annoying when typing code"
+  command: "defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -int {{ NSAutomaticDashSubstitutionEnabled }}"
+  when: "'NSAutomaticDashSubstitutionEnabled = {{ NSAutomaticDashSubstitutionEnabled }}' not in appledefaults.stdout"
+
+
+###############################################################################
+# SSD-specific tweaks                                                         #
+###############################################################################
+
+- name: "Disable hibernation (speeds up entering sleep mode)"
+  command: pmset -a hibernatemode 0
+  sudo: yes
+  when: SSDPresent and 'hibernatemode        0' not in pmset.stdout
+
+# Remove the sleep image file to save disk space
+# Create a zero-byte file instead…
+# …and make sure it can’t be rewritten
+
+- name: "Read Sleep Image File Information"
+  command: "ls -lO /Private/var/vm"
+  register: sleep_image_file
+  changed_when: False
+
+- name: "Sleep Image File Change"
+  sudo: yes
+  command: "{{ item }}"
+  with_items:
+    - "rm -f /Private/var/vm/sleepimage"
+    - "touch /Private/var/vm/sleepimage"
+    - "chflags uchg /Private/var/vm/sleepimage"
+  when: SSDPresent and 'uchg 0' not in sleep_image_file.stdout
+
+- name: "Disable the sudden motion sensor as it’s not useful for SSDs"
+  command: pmset -a sms 0
+  sudo: yes
+  when: SSDPresent and 'sms' in pmset_capabilities.stdout
+
+###############################################################################
+# Trackpad, mouse, keyboard, Bluetooth accessories, and input                 #
+###############################################################################
+
+- name: "Get Bluetooth Trackpad Settings"
+  command: "defaults read com.apple.driver.AppleBluetoothMultitouch.trackpad"
+  register: apple_bluetooth_trackpad_settings
+  changed_when: False
+
+- name: "Enable Tap to Click on Bluetooh Trackpad"
+  command: "defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -int {{ TrackpadClicking }}"
+  when: "'Clicking = {{ TrackpadClicking }}' not in apple_bluetooth_trackpad_settings.stdout"
+
+- name: "Trackpad: enable tap to click for this user and for the login screen"
+  command: "{{ item }}"
+  with_items:
+    - "defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int {{ TapBehavior }}"
+    - "defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int {{ TapBehavior }}"
+  when: "'\"com.apple.mouse.tapBehavior\" = {{ TapBehavior }}' not in appledefaults.stdout"
+
+- name: "Set Trackpad Corner Click on Bluetooth Trackpad"
+  command: "defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadCornerSecondaryClick -int {{ TrackpadCornerSecondaryClick }}"
+  when: "'TrackpadCornerSecondaryClick = {{ TrackpadCornerSecondaryClick }}' not in apple_bluetooth_trackpad_settings.stdout"
+
+- name: "Set Trackpad Right Click on Bluetooth Trackpad"
+  command: "defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadRightClick -int {{ TrackpadRightClick }}"
+  when: "'TrackpadRightClick = {{ TrackpadRightClick }}' not in apple_bluetooth_trackpad_settings.stdout"
+
+- name: "Trackpad: map bottom right corner to right-click"
+  command: "{{ item }}"
+  with_items:
+    - "defaults -currentHost write NSGlobalDomain com.apple.trackpad.trackpadCornerClickBehavior -int {{ TrackpadCornerClickBehavior }}"
+    - "defaults write NSGlobalDomain com.apple.trackpad.trackpadCornerClickBehavior -int {{ TrackpadCornerClickBehavior }}"
+  when: "'\"com.apple.trackpad.trackpadCornerClickBehavior\" = {{ TrackpadCornerClickBehavior }}' not in appledefaults.stdout"
+
+- name: "Trackpad: enable secondary click"
+  command: "{{ item }}"
+  with_items:
+    - "defaults -currentHost write NSGlobalDomain com.apple.trackpad.enableSecondaryClick -int {{ EnableSecondaryClick }}"
+    - "defaults write NSGlobalDomain com.apple.trackpad.enableSecondaryClick -int {{ EnableSecondaryClick }}"
+  when: "'\"com.apple.trackpad.enableSecondaryClick\" = {{ EnableSecondaryClick }}' not in appledefaults.stdout"
+
+- name: "Disable natural (Lion-style) scrolling"
+  command: "defaults write NSGlobalDomain com.apple.swipescrolldirection -int {{ SwipeScrollDirection }}"
+  when: "'\"com.apple.swipescrolldirection\" = {{ SwipeScrollDirection }}' not in appledefaults.stdout"
+
+- name: "Increase sound quality for Bluetooth headphones/headsets"
+  command: 'defaults write com.apple.BluetoothAudioAgent "Apple Bitpool Min (editable)" -int {{ BluetoothAudioAgentAppleBitpoolMin }}'
+  when: "'\"Apple Bitpool Min (editable)\" = {{ BluetoothAudioAgentAppleBitpoolMin }}' not in appledefaults.stdout"
+
+- name: "Enable full keyboard access for all controls"
+  command: "defaults write NSGlobalDomain AppleKeyboardUIMode -int {{ AppleKeyboardUIMode }}"
+  when: "'AppleKeyboardUIMode = {{ AppleKeyboardUIMode }}' not in appledefaults.stdout"
+
+- name: "Use scroll gesture with the Ctrl (^) modifier key to zoom"
+  command: "defaults write com.apple.universalaccess closeViewScrollWheelToggle -int {{ CloseViewScrollWheelToggle }}"
+  when: "'closeViewScrollWheelToggle = {{ CloseViewScrollWheelToggle }}' not in appledefaults.stdout"
+
+- name: "Set HID ScrollZoom Modifier Mask"
+  command: "defaults write com.apple.universalaccess HIDScrollZoomModifierMask -int {{ HIDScrollZoomModifierMask }}"
+  when: "'HIDScrollZoomModifierMask = {{ HIDScrollZoomModifierMask }}' not in appledefaults.stdout"
+
+- name: "Follow the keyboard focus while zoomed in"
+  command: "defaults write com.apple.universalaccess closeViewZoomFollowsFocus -int {{ CloseViewZoomFollowsFocus }}"
+  when: "'closeViewZoomFollowsFocus = {{ CloseViewZoomFollowsFocus }}' not in appledefaults.stdout"
+
+- name: "Disable press-and-hold for keys in favor of key repeat"
+  command: "defaults write NSGlobalDomain ApplePressAndHoldEnabled -int {{ ApplePressAndHoldEnabled }}"
+  when: "'ApplePressAndHoldEnabled = {{ ApplePressAndHoldEnabled }}' not in appledefaults.stdout"
+
+- name: "Set a blazingly fast keyboard repeat rate"
+  command: "defaults write NSGlobalDomain KeyRepeat -int {{ KeyRepeat }}"
+  when: "'KeyRepeat = {{ KeyRepeat }}' not in appledefaults.stdout"
+
+- name: "Read Current Language"
+  command: "defaults read NSGlobalDomain AppleLanguages"
+  register: current_language
+  changed_when: False
+
+- name: "Set Language"
+  command: 'defaults write NSGlobalDomain AppleLanguages -array "{{ AppleLanguages }}"'
+  when: "'{{ AppleLanguages }}' not in current_language.stdout"
+
+- name: "Set Locale"
+  command: 'defaults write NSGlobalDomain AppleLocale -string "{{ AppleLocale }}"'
+  when: "'AppleLocale = \"en_US@currency=USD\"' not in appledefaults.stdout"
+
+- name: "Set Measurement Unit"
+  command: 'defaults write NSGlobalDomain AppleMeasurementUnits -string "{{ AppleMeasurementUnits }}"'
+  when: "'AppleMeasurementUnits = {{ AppleMeasurementUnits }}' not in appledefaults.stdout"
+
+- name: "Set Metric Unit"
+  command: 'defaults write NSGlobalDomain AppleMetricUnits -int {{ AppleMetricUnits }}'
+  when: "'AppleMetricUnits = {{ AppleMetricUnits }}' not in appledefaults.stdout"
+
+- name: "Get current timezone"
+  command: "systemsetup -gettimezone"
+  sudo: yes
+  register: current_timezone
+  changed_when: False
+
+- name: "Set the timezone; see `sudo systemsetup -listtimezones` for other values"
+  command: 'systemsetup -settimezone "{{ Timezone }}" > /dev/null'
+  sudo: yes
+  when: "'{{ Timezone }}' not in current_timezone.stdout"
+
+- name: "Disable auto-correct"
+  command: "defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -int {{ NSAutomaticSpellingCorrectionEnabled }}"
+  when: "'NSAutomaticSpellingCorrectionEnabled = {{ NSAutomaticSpellingCorrectionEnabled }}' not in appledefaults.stdout"
+
+- name: "Stop iTunes from responding to the keyboard media keys"
+  command: "launchctl unload -w /System/Library/LaunchAgents/com.apple.rcd.plist 2> /dev/null"
+  when: "StopiTunesKeyboardRespose and 'com.apple.rcd' in loaded_plists.stdout"
+
+- name: "Let iTunes respond to the keyboard media keys"
+  command: "launchctl load -w /System/Library/LaunchAgents/com.apple.rcd.plist 2> /dev/null"
+  when: "not StopiTunesKeyboardRespose and 'com.apple.rcd' not in loaded_plists.stdout"
+
+###############################################################################
+# Screen                                                                      #
+###############################################################################
+
+- name: "Require password after sleep or screen saver begins"
+  command: "defaults write com.apple.screensaver askForPassword -int {{ AskForPassword }}"
+  when: "'askForPassword = {{ AskForPassword }}' not in appledefaults.stdout"
+
+- name: "Delay after sleep or screen saver begins to ask for password"
+  command: "defaults write com.apple.screensaver askForPasswordDelay -int {{ AskForPasswordDelay }}"
+  when: "'askForPasswordDelay = {{ AskForPasswordDelay }}' not in appledefaults.stdout"
+
+- name: "Get Screen Capture defaults"
+  command: "defaults read com.apple.screencapture"
+  register: screencapture_defaults
+  changed_when: False
+
+- name: "Read the path from the existing screencapture variable"
+  command: "echo {{ ScreenCaptureLocation }}"
+  register: current_finder_screenshotpath
+  changed_when: False
+
+- name: "Read set screencapture location"
+  command: "defaults read com.apple.screencapture location"
+  register: screencapture_location
+  changed_when: False
+
+- name: "Save screenshots to the desktop"
+  command: 'defaults write com.apple.screencapture location -string "{{ ScreenCaptureLocation }}"'
+  when: "current_finder_screenshotpath.stdout not in screencapture_location.stdout"
+
+- name: "Save screenshots in PNG format (other options: BMP, GIF, JPG, PDF, TIFF)"
+  command: 'defaults write com.apple.screencapture type -string "{{ ScreenCaptureType }}"'
+  when: "'type = {{ ScreenCaptureType }}' not in screencapture_defaults.stdout"
+
+- name: "Disable shadow in screenshots"
+  command: "defaults write com.apple.screencapture disable-shadow -int {{ ScreenCaptureDisableShadow }}"
+  when: "'\"disable-shadow\" = {{ ScreenCaptureDisableShadow }}' not in screencapture_defaults.stdout"
+
+- name: "Enable subpixel font rendering on non-Apple LCDs"
+  command: "defaults write NSGlobalDomain AppleFontSmoothing -int {{ AppleFontSmoothing }}"
+  when: "'AppleFontSmoothing = {{ AppleFontSmoothing }}' not in appledefaults.stdout"
+
+- name: "Read current HiDPI mode"
+  command: "defaults read /Library/Preferences/com.apple.windowserver DisplayResolutionEnabled"
+  register: HiDPI_mode
+  changed_when: False
+
+- name: "Enable HiDPI display modes (requires restart)"
+  command: "defaults write /Library/Preferences/com.apple.windowserver DisplayResolutionEnabled -int {{ DisplayResolutionEnabled }}"
+  sudo: yes
+  when: "'{{ DisplayResolutionEnabled }}' not in HiDPI_mode.stdout"
+
+###############################################################################
+# Finder                                                                      #
+###############################################################################
+
+- name: "Finder: allow quitting via Command + Q; doing so will also hide desktop icons"
+  command: "defaults write com.apple.finder QuitMenuItem -int {{ FinderQuitMenuItem }}"
+  when: "'QuitMenuItem = {{ FinderQuitMenuItem }}' not in appledefaults.stdout"
+
+- name: "Finder: disable window animations and Get Info animations"
+  command: "defaults write com.apple.finder DisableAllAnimations -int {{ FinderDisableAllAnimations }}"
+  when: "'DisableAllAnimations = {{ FinderDisableAllAnimations }}' not in appledefaults.stdout"
+
+# Set HomeDir as the default location for new Finder windows
+#  For other paths, use `PfLo` and `file:///full/path/here/`
+# For desktop, use `PfDe` and `file:///${HOME}/Desktop/
+- name: "Set Default Finder Window Target"
+  command: 'defaults write com.apple.finder NewWindowTarget -string "{{ FinderNewWindowTarget }}"'
+  when: "'NewWindowTarget = {{ FinderNewWindowTarget }}' not in appledefaults.stdout"
+
+- name: "Read the path from the existing Finder Window Path variable"
+  command: "echo {{ FinderNewWindowTargetPath }}"
+  register: current_finder_newwindowtargetpath
+  changed_when: False
+
+- name: "Read set NewWindowTargetPath"
+  command: "defaults read com.apple.finder NewWindowTargetPath"
+  register: NewWindowTargetPath
+  changed_when: False
+
+- name: "Set Default Finder Window Path"
+  command: 'defaults write com.apple.finder NewWindowTargetPath -string "{{ FinderNewWindowTargetPath }}"'
+  when: "current_finder_newwindowtargetpath.stdout not in NewWindowTargetPath.stdout"
+
+- name: "Show External Hard Drives on Desktop"
+  command: "defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -int {{ ShowExternalHardDrivesOnDesktop }}"
+  when: "'ShowExternalHardDrivesOnDesktop = {{ ShowExternalHardDrivesOnDesktop }}' not in appledefaults.stdout"
+
+- name: "Show Hard Drives on Desktop"
+  command: "defaults write com.apple.finder ShowHardDrivesOnDesktop -int {{ ShowHardDrivesOnDesktop }}"
+  when: "'ShowHardDrivesOnDesktop = {{ ShowHardDrivesOnDesktop }}' not in appledefaults.stdout"
+
+- name: "Show Mounted Servers on Desktop"
+  command: "defaults write com.apple.finder ShowMountedServersOnDesktop -int {{ ShowMountedServersOnDesktop }}"
+  when: "'ShowMountedServersOnDesktop = {{ ShowMountedServersOnDesktop }}' not in appledefaults.stdout"
+
+- name: "Show Removable Media on Desktop"
+  command: "defaults write com.apple.finder ShowRemovableMediaOnDesktop -int {{ ShowRemovableMediaOnDesktop }}"
+  when: "'ShowRemovableMediaOnDesktop = {{ ShowRemovableMediaOnDesktop }}' not in appledefaults.stdout"
+
+- name: "Finder: show hidden files by default"
+  command: "defaults write com.apple.finder AppleShowAllFiles -int {{ AppleShowAllFiles }}"
+  when: "'AppleShowAllFiles = {{ AppleShowAllFiles }}' not in appledefaults.stdout"
+
+- name: "Finder: show all filename extensions"
+  command: "defaults write NSGlobalDomain AppleShowAllExtensions -int {{ AppleShowAllExtensions }}"
+  when: "'AppleShowAllExtensions = {{ AppleShowAllExtensions }}' not in appledefaults.stdout"
+
+- name: "Finder: show status bar"
+  command: "defaults write com.apple.finder ShowStatusBar -int {{ FinderShowStatusBar }}"
+  when: "'ShowStatusBar = {{ FinderShowStatusBar }}' not in appledefaults.stdout"
+
+- name: "Finder: show path bar"
+  command: "defaults write com.apple.finder ShowPathbar -int {{ FinderShowPathbar }}"
+  when: "'ShowPathbar = {{ FinderShowPathbar }}' not in appledefaults.stdout"
+
+- name: "Finder: allow text selection in Quick Look"
+  command: "defaults write com.apple.finder QLEnableTextSelection -int {{ QLEnableTextSelection }}"
+  when: "'QLEnableTextSelection = {{ QLEnableTextSelection }}' not in appledefaults.stdout"
+
+- name: "Display full POSIX path as Finder window title"
+  command: "defaults write com.apple.finder _FXShowPosixPathInTitle -int {{ FinderShowPosixPathInTitle }}"
+  when: "'\"_FXShowPosixPathInTitle\" = {{ FinderShowPosixPathInTitle }}' not in appledefaults.stdout"
+
+- name: "When performing a search, search the current folder by default"
+  command: 'defaults write com.apple.finder FXDefaultSearchScope -string "{{ FinderDefaultSearchScope }}"'
+  when: "'FXDefaultSearchScope = {{ FinderDefaultSearchScope }}' not in appledefaults.stdout"
+
+- name: "Disable the warning when changing a file extension"
+  command: "defaults write com.apple.finder FXEnableExtensionChangeWarning -int {{ FXEnableExtensionChangeWarning }}"
+  when: "'FXEnableExtensionChangeWarning = {{ FXEnableExtensionChangeWarning }}' not in appledefaults.stdout"
+
+- name: "Enable spring loading for directories"
+  command: "defaults write NSGlobalDomain com.apple.springing.enabled -int {{ FinderSpringingEnabled }}"
+  when: "'\"com.apple.springing.enabled\" = {{ FinderSpringingEnabled }}' not in appledefaults.stdout"
+
+- name: "Remove the spring loading delay for directories"
+  command: "defaults write NSGlobalDomain com.apple.springing.delay -float {{ FinderSpringingDelay }}"
+  when: "'\"com.apple.springing.delay\" = {{ FinderSpringingDelay }}' not in appledefaults.stdout"
+
+- name: "Avoid creating .DS_Store files on network volumes"
+  command: "defaults write com.apple.desktopservices DSDontWriteNetworkStores -int {{ DSDontWriteNetworkStores }}"
+  when: "'DSDontWriteNetworkStores = {{ DSDontWriteNetworkStores }}' not in appledefaults.stdout"
+
+- name: "Disable disk image verification"
+  command: "{{ item }}"
+  with_items:
+    - "defaults write com.apple.frameworks.diskimages skip-verify -int {{ DisableDiskImageVerification }}"
+    - "defaults write com.apple.frameworks.diskimages skip-verify-locked -int {{ DisableDiskImageVerification }}"
+    - "defaults write com.apple.frameworks.diskimages skip-verify-remote -int {{ DisableDiskImageVerification }}"
+  when: "'\"skip-verify\" = {{ DisableDiskImageVerification }}' not in appledefaults.stdout and '\"skip-verify-locked\" = {{ DisableDiskImageVerification }}' not in appledefaults.stdout and '\"skip-verify-remote\" = {{ DisableDiskImageVerification }}' not in appledefaults.stdout"
+
+- name: "Automatically open a new Finder window when a volume is mounted"
+  command: "{{ item }}"
+  with_items:
+  - "defaults write com.apple.frameworks.diskimages auto-open-ro-root -int {{ FinderAutoOpenWindowWhenMounted }}"
+  - "defaults write com.apple.frameworks.diskimages auto-open-rw-root -int {{ FinderAutoOpenWindowWhenMounted }}"
+  - "defaults write com.apple.finder OpenWindowForNewRemovableDisk -int {{ FinderAutoOpenWindowWhenMounted }}"
+  when: "'\"auto-open-ro-root\" = {{ FinderAutoOpenWindowWhenMounted }}' not in appledefaults.stdout and '\"auto-open-rw-root\" = {{ FinderAutoOpenWindowWhenMounted }}' not in appledefaults.stdout and 'OpenWindowForNewRemovableDisk = {{ FinderAutoOpenWindowWhenMounted }}' not in appledefaults.stdout"
+
+- name: "Read DesktopViewSettings defaults"
+  command: "defaults read ~/Library/Preferences/com.apple.finder.plist DesktopViewSettings"
+  register: DesktopViewSettings
+  changed_when: False
+
+- name: "Read StandardViewSettings defaults"
+  command: "defaults read ~/Library/Preferences/com.apple.finder.plist StandardViewSettings"
+  register: StandardViewSettings
+  changed_when: False
+
+- name: "Show item info near icons on the desktop"
+  command: '/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:showItemInfo {{ FinderShowItemInfoNearIcons }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'showItemInfo = {{ FinderShowItemInfoNearIcons }}' not in DesktopViewSettings.stdout"
+
+- name: "Show item info near icons in other icon views"
+  command: '/usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:showItemInfo {{ FinderShowItemInfoNearIcons }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'showItemInfo = {{ FinderShowItemInfoNearIcons }}' not in StandardViewSettings.stdout"
+
+- name: "Enable snap-to-grid for icons on the desktop"
+  command: '/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:arrangeBy {{ IconViewSettingsArrangeBy }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'arrangeBy = {{ IconViewSettingsArrangeBy }}' not in DesktopViewSettings.stdout"
+
+- name: "Enable snap-to-grid for icons in other icon views"
+  command: '/usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:arrangeBy {{ IconViewSettingsArrangeBy }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'arrangeBy = {{ IconViewSettingsArrangeBy }}' not in StandardViewSettings.stdout"
+
+- name: "Increase grid spacing for icons on the desktop"
+  command: '/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:gridSpacing {{ IconViewSettingsGridSpacing }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'gridSpacing = {{ IconViewSettingsGridSpacing }}' not in DesktopViewSettings.stdout"
+
+- name: "Increase grid spacing for icons in other icon views"
+  command: '/usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:gridSpacing {{ IconViewSettingsGridSpacing }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'gridSpacing = {{ IconViewSettingsGridSpacing }}' not in StandardViewSettings.stdout"
+
+- name: "Increase the size of icons on the desktop"
+  command: '/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:iconSize {{ IconViewSettingsIconSize }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'iconSize = {{ IconViewSettingsIconSize }}' not in DesktopViewSettings.stdout"
+
+- name: "Increase the size of icons in other icon views"
+  command: '/usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:iconSize {{ IconViewSettingsIconSize }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'iconSize = {{ IconViewSettingsIconSize }}' not in StandardViewSettings.stdout"
+
+- name: "Show item info to the right of the icons on the desktop"
+  command: '/usr/libexec/PlistBuddy -c "Set DesktopViewSettings:IconViewSettings:labelOnBottom {{ ShowItemInfoOnBottomOfDesktopIcon }}" ~/Library/Preferences/com.apple.finder.plist'
+  when: "'labelOnBottom = {{ ShowItemInfoOnBottomOfDesktopIcon }}' not in DesktopViewSettings.stdout"
+
+- name: "Use list view in all Finder windows by default"
+  command: 'defaults write com.apple.finder FXPreferredViewStyle -string "{{ FinderDefaultViewType }}"'
+  when: "'FXPreferredViewStyle = {{ FinderDefaultViewType }}' not in appledefaults.stdout"
+
+- name: "Disable the warning before emptying the Trash"
+  command: "defaults write com.apple.finder WarnOnEmptyTrash -int {{ WarnOnEmptyTrash }}"
+  when: "'WarnOnEmptyTrash = {{ WarnOnEmptyTrash }}' not in appledefaults.stdout"
+
+- name: "Empty Trash securely by default"
+  command: "defaults write com.apple.finder EmptyTrashSecurely -int {{ EmptyTrashSecurely }}"
+  when: "'EmptyTrashSecurely = {{ EmptyTrashSecurely }}' not in appledefaults.stdout"
+
+- name: "Enable AirDrop over Ethernet and on unsupported Macs running Lion"
+  command: "defaults write com.apple.NetworkBrowser BrowseAllInterfaces -int {{ EnableAirDropOverEthernet }}"
+  when: "'BrowseAllInterfaces = {{ EnableAirDropOverEthernet }}' not in appledefaults.stdout"
+
+- name: "Read nvram boot args"
+  command: "nvram boot-args"
+  register: boot_args
+  failed_when: False
+  changed_when: False
+
+- name: "Enable the MacBook Air SuperDrive on any Mac"
+  command: 'nvram boot-args="mbasd={{EnableSuperDrive}}"'
+  sudo: yes
+  when: "'mbasd={{EnableSuperDrive}}' not in boot_args.stdout"
+
+- name: "Get the hidden state of the ~/Library folder"
+  command: "ls -ldO ~/Library"
+  register: library_hidden_state
+  changed_when: False
+
+- name: "Show the ~/Library folder"
+  command: "chflags nohidden ~/Library"
+  when: "'hidden' in library_hidden_state.stdout and ShowLibraryFolder"
+
+- name: "Hide the ~/Library folder"
+  command: "chflags hidden ~/Library"
+  when: "'hidden' not in library_hidden_state.stdout and not ShowLibraryFolder"
+
+- name: "Read FXInfoPanesExpanded"
+  command: "defaults read com.apple.finder FXInfoPanesExpanded"
+  register: FXInfoPanesExpanded_defaults
+  changed_when: False
+
+- name: "Expand File Info panes by default"
+  command: "defaults write com.apple.finder FXInfoPanesExpanded -dict General -int {{ FinderGetInfoGeneral }} MetaData -int {{ FinderGetInfoMetaData }} Name -int {{ FinderGetInfoName }} Preview -int {{ FinderGetInfoPreview }} OpenWith -int {{ FinderGetInfoOpenWith }} Privileges -int {{ FinderGetInfoPrivileges }}"
+  when: "'General = {{ FinderGetInfoGeneral }}' not in FXInfoPanesExpanded_defaults.stdout and 'MetaData = {{ FinderGetInfoMetaData }}' not in FXInfoPanesExpanded_defaults.stdout and 'Name = {{ FinderGetInfoName }}' not in FXInfoPanesExpanded_defaults.stdout and 'Preview = {{ FinderGetInfoPreview }}' not in FXInfoPanesExpanded_defaults.stdout and 'OpenWith = {{ FinderGetInfoOpenWith }}' not in FXInfoPanesExpanded_defaults.stdout and 'Privileges = {{ FinderGetInfoPrivileges }}' not in FXInfoPanesExpanded_defaults.stdout"
+
+
+###############################################################################
+# Dock, Dashboard, and hot corners                                            #
+###############################################################################
+- name: "Read Dock Prefs"
+  command: "defaults read com.apple.dock"
+  register: dockdefaults
+  changed_when: False
+
+- name: "Enable highlight hover effect for the grid view of a stack (Dock)"
+  command: "defaults write com.apple.dock mouse-over-hilite-stack -int {{ DockMouseOverHiliteStack }}"
+  when: "'\"mouse-over-hilite-stack\" = {{ DockMouseOverHiliteStack }}' not in dockdefaults.stdout"
+
+- name: "Set the icon size of Dock items"
+  command: "defaults write com.apple.dock tilesize -int {{ DockTileSize }}"
+  when: "'tilesize = {{ DockTileSize }}' not in dockdefaults.stdout"
+
+- name: "Change minimize/maximize window effect"
+  command: 'defaults write com.apple.dock mineffect -string "{{ DockMinEffect }}"'
+  when: "'mineffect = {{ DockMinEffect }}' not in dockdefaults.stdout"
+
+- name: "Minimize windows into their application’s icon"
+  command: "defaults write com.apple.dock minimize-to-application -int {{ DockMinimizeToApplicationIcon }}"
+  when: "'\"minimize-to-application\" = {{ DockMinimizeToApplicationIcon }}' not in dockdefaults.stdout"
+
+- name: "Enable spring loading for all Dock items"
+  command: "defaults write com.apple.dock enable-spring-load-actions-on-all-items -int {{ DockSpringLoadAllItems }}"
+  when: "'\"enable-spring-load-actions-on-all-items\" = {{ DockSpringLoadAllItems }}' not in dockdefaults.stdout"
+
+- name: "Show indicator lights for open applications in the Dock"
+  command: "defaults write com.apple.dock show-process-indicators -int {{ DockShowProcessIndicators }}"
+  when: "'\"show-process-indicators\" = {{ DockShowProcessIndicators }}' not in dockdefaults.stdout"
+
+- name: "Wipe all (default) app icons from the Dock"
+  command: 'defaults write com.apple.dock persistent-apps -array ""'
+  when: DockWipeAllDefaultAppIcons
+
+- name: "Don’t animate opening applications from the Dock"
+  command: "defaults write com.apple.dock launchanim -int {{ DockLaunchAnimation }}"
+  when: "'launchanim = {{ DockLaunchAnimation }}' not in dockdefaults.stdout"
+
+- name: "Speed up Mission Control animations"
+  command: "defaults write com.apple.dock expose-animation-duration -float {{ MissionControlAnimationDuration }}"
+  when: "'\"expose-animation-duration\" = \"{{ MissionControlAnimationDuration }}\"' not in dockdefaults.stdout"
+
+- name: "Don’t group windows by application in Mission Control"
+  command: "defaults write com.apple.dock expose-group-by-app -int {{ ExposeGroupByApp }}"
+  when: "'\"expose-group-by-app\" = {{ ExposeGroupByApp }}' not in dockdefaults.stdout"
+
+- name: "Disable Dashboard"
+  command: "defaults write com.apple.dashboard mcx-disabled -int {{ DashboardDisable }}"
+  when: "'\"mcx-disabled\" = {{ DashboardDisable }}' not in appledefaults.stdout"
+
+- name: "Don’t show Dashboard as a Space"
+  command: "defaults write com.apple.dock dashboard-in-overlay -int {{ DashboardInOverlay }}"
+  when: "'\"dashboard-in-overlay\" = {{ DashboardInOverlay }}' not in dockdefaults.stdout"
+
+- name: "Don’t automatically rearrange Spaces based on most recent use"
+  command: "defaults write com.apple.dock mru-spaces -int {{ ArrangeSpacesByRecentUse }}"
+  when: "'\"mru-spaces\" = {{ ArrangeSpacesByRecentUse }}' not in dockdefaults.stdout"
+
+- name: "Remove the auto-hiding Dock delay"
+  command: "defaults write com.apple.dock autohide-delay -float {{ DockAutohideDelay }}"
+  when: "'\"autohide-delay\" = {{ DockAutohideDelay }}' not in dockdefaults.stdout"
+
+- name: "Remove the animation when hiding/showing the Dock"
+  command: "defaults write com.apple.dock autohide-time-modifier -float {{ DockAutohideTime }}"
+  when: "'\"autohide-time-modifier\" = \"{{ DockAutohideTime }}\"' not in dockdefaults.stdout"
+
+- name: "Automatically hide and show the Dock"
+  command: "defaults write com.apple.dock autohide -int {{ DockAutoHide }}"
+  when: "'autohide = {{ DockAutoHide }}' not in dockdefaults.stdout"
+
+- name: "Make Dock icons of hidden applications translucent"
+  command: "defaults write com.apple.dock showhidden -int {{ DockShowHidden }}"
+  when: "'showhidden = {{ DockShowHidden }}' not in dockdefaults.stdout"
+
+- name: "Enable the Launchpad gesture (pinch with thumb and three fingers)"
+  command: "defaults write com.apple.dock showLaunchpadGestureEnabled -int {{ LaunchpadGestureEnabled }}"
+  when: "'showLaunchpadGestureEnabled = {{ LaunchpadGestureEnabled }}' not in dockdefaults.stdout"
+
+- name: "Get list of launchpad files that need to be reset"
+  command: 'find "${HOME}/Library/Application Support/Dock" -name "*-*.db" -maxdepth 1'
+  register: launchpad_reset_files
+  changed_when: False
+
+- name: "Delete launchpad db files for reset"
+  file: path={{ item }} state=absent
+  with_items: launchpad_reset_files.stdout_lines
+
+- name: "Set Top Left Hot Corner"
+  command: "{{ item }}"
+  with_items:
+    - "defaults write com.apple.dock wvous-tl-corner -int {{ TopLeftHotCorner }}"
+    - "defaults write com.apple.dock wvous-tl-modifier -int 0"
+  when: "'\"wvous-tl-corner\" = {{ TopLeftHotCorner }}' not in dockdefaults.stdout and '\"wvous-tl-modifier\" = 0' not in dockdefaults.stdout"
+
+- name: "Set Top Right Hot Corner"
+  command: "{{ item }}"
+  with_items:
+    - "defaults write com.apple.dock wvous-tr-corner -int {{ TopRightHotCorner }}"
+    - "defaults write com.apple.dock wvous-tr-modifier -int 0"
+  when: "'\"wvous-tr-corner\" = {{ TopRightHotCorner }}' not in dockdefaults.stdout and '\"wvous-tr-modifier\" = 0' not in dockdefaults.stdout"
+
+- name: "Set Bottom Left Hot Corner"
+  command: "{{ item }}"
+  with_items:
+    - "defaults write com.apple.dock wvous-bl-corner -int {{ BottomLeftHotCorner }}"
+    - "defaults write com.apple.dock wvous-bl-modifier -int 0"
+  when: "'\"wvous-bl-corner\" = {{ BottomLeftHotCorner }}' not in dockdefaults.stdout and '\"wvous-bl-modifier\" = 0' not in dockdefaults.stdout"
+
+- name: "Set Bottom Right Hot Corner"
+  command: "{{ item }}"
+  with_items:
+    - "defaults write com.apple.dock wvous-br-corner -int {{ BottomRightHotCorner }}"
+    - "defaults write com.apple.dock wvous-br-modifier -int 0"
+  when: "'\"wvous-br-corner\" = {{ BottomRightHotCorner }}' not in dockdefaults.stdout and '\"wvous-br-modifier\" = 0' not in dockdefaults.stdout"
+
+
+###############################################################################
+# Safari & WebKit                                                             #
+###############################################################################
+
+- name: "Read Safari Preferences"
+  command: "defaults read com.apple.Safari"
+  register: safari_defaults
+  changed_when: False
+
+- name: "Privacy: don’t send search queries to Apple"
+  command: "defaults write com.apple.Safari UniversalSearchEnabled -int {{ SafariUniversalSearchEnabled }}"
+  when: "'UniversalSearchEnabled = {{ SafariUniversalSearchEnabled }}' not in safari_defaults.stdout"
+
+- name: "Press Tab to highlight each item on a web page"
+  command: "{{ item }}"
+  with_items:
+    - "defaults write com.apple.Safari WebKitTabToLinksPreferenceKey -int {{ SafariTabToLink }}"
+    - "defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks -int {{ SafariTabToLink }}"
+  when: "'WebKitTabToLinksPreferenceKey = {{ SafariTabToLink }}' not in safari_defaults.stdout and '\"com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks\" = {{ SafariTabToLink }}' not in safari_defaults.stdout"
+
+- name: "Show the full URL in the address bar (note: this still hides the scheme)"
+  command: "defaults write com.apple.Safari ShowFullURLInSmartSearchField -int {{ SafariShowFullURLInSmartSearchField }}"
+  when: "'ShowFullURLInSmartSearchField = {{ SafariShowFullURLInSmartSearchField }}' not in safari_defaults.stdout"
+
+- name: "Set Safari’s home page"
+  command: 'defaults write com.apple.Safari HomePage -string "{{ SafariHomePage }}"'
+  when: "'HomePage = \"{{ SafariHomePage }}\"' not in safari_defaults.stdout"
+
+- name: "Prevent Safari from opening safe files automatically after downloading"
+  command: "defaults write com.apple.Safari AutoOpenSafeDownloads -int {{ SafaiAutoOpenSafeDownloads }}"
+  when: "'AutoOpenSafeDownloads = {{ SafaiAutoOpenSafeDownloads }}' not in safari_defaults.stdout"
+
+- name: "Allow hitting the Backspace key to go to the previous page in history"
+  command: "defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2BackspaceKeyNavigationEnabled -int {{ SafariWebKit2BackspaceKeyNavigationEnabled }}"
+  when: "'\"com.apple.Safari.ContentPageGroupIdentifier.WebKit2BackspaceKeyNavigationEnabled\" = {{ SafariWebKit2BackspaceKeyNavigationEnabled }}' not in safari_defaults.stdout"
+
+- name: "Hide Safari’s bookmarks bar by default"
+  command: "defaults write com.apple.Safari ShowFavoritesBar -int {{ SafariShowFavoritesBar }}"
+  when: "'ShowFavoritesBar = {{ SafariShowFavoritesBar }}' not in safari_defaults.stdout"
+
+- name: "Hide Safari’s sidebar in Top Sites"
+  command: "defaults write com.apple.Safari ShowSidebarInTopSites -int {{ SafariShowSidebarInTopSites }}"
+  when: "'ShowSidebarInTopSites = {{ SafariShowSidebarInTopSites }}' not in safari_defaults.stdout"
+
+- name: "Disable Safari’s thumbnail cache for History and Top Sites"
+  command: "defaults write com.apple.Safari DebugSnapshotsUpdatePolicy -int 2"
+  when: "SafariDebugSnapshotsUpdatePolicy and 'DebugSnapshotsUpdatePolicy = 2' not in safari_defaults.stdout"
+
+- name: "Enable Safari’s thumbnail cache for History and Top Sites"
+  command: "defaults delete write com.apple.Safari DebugSnapshotsUpdatePolicy"
+  when: "not SafariDebugSnapshotsUpdatePolicy and 'DebugSnapshotsUpdatePolicy = 2' in appledefaults.stdout"
+
+- name: "Enable Safari’s debug menu"
+  command: "defaults write com.apple.Safari IncludeInternalDebugMenu -int {{ SafariEnableDebugMenu }}"
+  when: "'IncludeInternalDebugMenu = {{ SafariEnableDebugMenu }}' not in safari_defaults.stdout"
+
+- name: "Make Safari’s search banners default to Contains instead of Starts With"
+  command: "defaults write com.apple.Safari FindOnPageMatchesWordStartsOnly -int {{ SafariFindOnPageMatchesWordStartsOnly }}"
+  when: "'FindOnPageMatchesWordStartsOnly = {{ SafariFindOnPageMatchesWordStartsOnly }}' not in safari_defaults.stdout"
+
+- name: "Remove useless icons from Safari’s bookmarks bar"
+  command: 'defaults write com.apple.Safari ProxiesInBookmarksBar "{{ SafariProxiesInBookmarksBar }}"'
+  when: "'Reading List' in safari_defaults.stdout"
+
+- name: "Enable the Develop menu and the Web Inspector in Safari"
+  command: "{{ item }}"
+  with_items:
+    - "defaults write com.apple.Safari IncludeDevelopMenu -int {{ SafariDeveloperMode }}"
+    - "defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -int {{ SafariDeveloperMode }}"
+    - "defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -int {{ SafariDeveloperMode }}"
+  when: "'IncludeDevelopMenu = {{ SafariDeveloperMode }}' not in safari_defaults.stdout and 'WebKitDeveloperExtrasEnabledPreferenceKey = {{ SafariDeveloperMode }}' not in safari_defaults.stdout and '\"com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled\" = {{ SafariDeveloperMode }}' not in safari_defaults.stdout"
+
+- name: "Add a context menu item for showing the Web Inspector in web views"
+  command: "defaults write NSGlobalDomain WebKitDeveloperExtras -int {{ SafariWebKitDeveloperExtras }}"
+  when: "'WebKitDeveloperExtras = {{ SafariWebKitDeveloperExtras }}' not in appledefaults.stdout"
+
+###############################################################################
+# Mail                                                                        #
+###############################################################################
+
+- name: Read Mail Defaults
+  command: defaults read com.apple.mail
+  register: mail_defaults
+  changed_when: False
+
+- name: "Disable reply animations in Mail.app"
+  command: "defaults write com.apple.mail DisableReplyAnimations -int {{ MailDisableAnimations }}"
+  when: "'DisableReplyAnimations = {{ MailDisableAnimations }}' not in mail_defaults.stdout"
+
+- name: "Disable send animations in Mail.app"
+  command: "defaults write com.apple.mail DisableSendAnimations -int {{ MailDisableAnimations }}"
+  when: "'DisableSendAnimations = {{ MailDisableAnimations }}' not in mail_defaults.stdout"
+
+- name: "Copy email addresses as `foo@example.com` instead of `Foo Bar <foo@example.com>` in Mail.app"
+  command: "defaults write com.apple.mail AddressesIncludeNameOnPasteboard -int {{ MailAddressesIncludeNameOnPasteboard }}"
+  when: "'AddressesIncludeNameOnPasteboard = {{ MailAddressesIncludeNameOnPasteboard }}' not in mail_defaults.stdout"
+
+- name: "Add the keyboard shortcut ⌘ + Enter to send an email in Mail.app"
+  command: 'defaults write com.apple.mail NSUserKeyEquivalents -dict-add "Send" -string "{{ MailSendKeyboardShortcut }}"'
+  when: "'U21a9' not in mail_defaults.stdout"
+
+- name: "Disable emails in threaded mode"
+  command: 'defaults write com.apple.mail DraftsViewerAttributes -dict-add "DisplayInThreadedMode" -string "{{ MailDisplayInThreadedMode }}"'
+  when: "'DisplayInThreadedMode = {{ MailDisplayInThreadedMode }}' not in mail_defaults.stdout"
+
+- name: "Sort Emails Decending"
+  command: 'defaults write com.apple.mail DraftsViewerAttributes -dict-add "SortedDescending" -string "{{ MailSortDescending }}"'
+  when: "'SortedDescending = {{ MailSortDescending }}' not in mail_defaults.stdout"
+
+- name: "Sort Order of Emails"
+  command: 'defaults write com.apple.mail DraftsViewerAttributes -dict-add "SortOrder" -string "{{ MailSortOrder }}"'
+  when: "'SortOrder = \"{{ MailSortOrder }}\"' not in mail_defaults.stdout"
+
+- name: "Disable inline attachments (just show the icons)"
+  command: "defaults write com.apple.mail DisableInlineAttachmentViewing -int {{ MailDisableInlineAttachmentViewing }}"
+  when: "'DisableInlineAttachmentViewing = {{ MailDisableInlineAttachmentViewing }}' not in mail_defaults.stdout"
+
+- name: "Disable automatic spell checking"
+  command: 'defaults write com.apple.mail SpellCheckingBehavior -string "{{ MailSpellCheckingBehavior }}"'
+  when: "'SpellCheckingBehavior = {{ MailSpellCheckingBehavior }}' not in mail_defaults.stdout"
+
+
+
+###############################################################################
+# Terminal                                                                    #
+###############################################################################
+
+- name: Read Terminal String Encoding Defaults
+  command: defaults read com.apple.terminal StringEncodings
+  register: TerminalStringEncoding
+  changed_when: False
+
+- name: "Only use UTF-8 in Terminal.app"
+  command: "defaults write com.apple.terminal StringEncodings -array 4"
+  when: TerminalUTF8 and '4' not in TerminalStringEncoding.stdout
+
+###############################################################################
+# Time Machine                                                                #
+###############################################################################
+
+- name: "Prevent Time Machine from prompting to use new hard drives as backup volume"
+  command: "defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -int {{ TimeMachineDoNotOfferNewDisksForBackup }}"
+  when: "'DoNotOfferNewDisksForBackup = {{ TimeMachineDoNotOfferNewDisksForBackup }}' not in appledefaults.stdout"
+
+- name: "Disable local Time Machine backups"
+  command: tmutil disablelocal
+  sudo: yes
+  when: "TimeMachineDisableLocalBackups and 'total 0' in mobilebackups.stdout"
+
+- name: "Enable local Time Machine backups"
+  command: tmutil enablelocal
+  sudo: yes
+  when: "not TimeMachineDisableLocalBackups and 'No such file or directory' in mobilebackups.stdout"
+
+###############################################################################
+# Activity Monitor                                                            #
+###############################################################################
+
+- name: "Show the main window when launching Activity Monitor"
+  command: "defaults write com.apple.ActivityMonitor OpenMainWindow -int {{ ActivityMonitorOpenMainWindow }}"
+  when: "'OpenMainWindow = {{ ActivityMonitorOpenMainWindow }}' not in apple_activity_monitor_defaults.stdout"
+
+- name: "Visualize CPU usage in the Activity Monitor Dock icon"
+  command: "defaults write com.apple.ActivityMonitor IconType -int {{ ActivityMonitorIconType }}"
+  when: "'IconType = {{ ActivityMonitorIconType }}' not in apple_activity_monitor_defaults.stdout"
+
+- name: "Show all processes in Activity Monitor"
+  command: "defaults write com.apple.ActivityMonitor ShowCategory -int {{ ActivityMonitorShowCategory }}"
+  when: "'ShowCategory = {{ ActivityMonitorShowCategory }}' not in apple_activity_monitor_defaults.stdout"
+
+- name: "Sort Activity Monitor results"
+  command: 'defaults write com.apple.ActivityMonitor SortColumn -string "{{ ActivityMonitorSortColumn }}"'
+  when: "'SortColumn = {{ ActivityMonitorSortColumn }}' not in apple_activity_monitor_defaults.stdout"
+
+- name: "Sort Activity Monitor results"
+  command: 'defaults write com.apple.ActivityMonitor SortDirection -int 0'
+  when: "'SortDirection = 0' not in apple_activity_monitor_defaults.stdout"
+
+###############################################################################
+# Address Book, Dashboard, iCal, TextEdit, and Disk Utility                   #
+###############################################################################
+
+- name: "Enable the debug menu in Address Book"
+  command: "defaults write com.apple.addressbook ABShowDebugMenu -int {{ AddressBookShowDebugMenu }}"
+  when: "'ABShowDebugMenu = {{ AddressBookShowDebugMenu }}' not in appledefaults.stdout"
+
+- name: "Enable Dashboard dev mode (allows keeping widgets on the desktop)"
+  command: "defaults write com.apple.dashboard devmode -int {{ DashboardDevMode }}"
+  when: "'devmode = {{ DashboardDevMode }}' not in appledefaults.stdout"
+
+- name: "Use plain text mode for new TextEdit documents"
+  command: "defaults write com.apple.TextEdit RichText -int {{ TextEditRichText }}"
+  when: "'RichText = {{ TextEditRichText }}' not in appledefaults.stdout"
+
+- name: "Open and save files as UTF-8 in TextEdit"
+  command: "defaults write com.apple.TextEdit PlainTextEncoding -int {{ TextEditPlainTextEncoding }}"
+  when: "'PlainTextEncoding = {{ TextEditPlainTextEncoding }}' not in appledefaults.stdout"
+
+- name: "Write files as UTF-8 in TextEdit"
+  command: "defaults write com.apple.TextEdit PlainTextEncodingForWrite -int {{ TextEditPlainTextEncoding }}"
+  when: "'PlainTextEncodingForWrite = {{ TextEditPlainTextEncoding }}' not in appledefaults.stdout"
+
+- name: "Enable the debug menu in Disk Utility"
+  command: "defaults write com.apple.DiskUtility DUDebugMenuEnabled -int {{ DiskUtilityDebugMenu }}"
+  when: "'DUDebugMenuEnabled = {{ DiskUtilityDebugMenu }}' not in appledefaults.stdout"
+
+- name: "Enable the Advanced Image Options in Disk Utility"
+  command: "defaults write com.apple.DiskUtility advanced-image-options -int {{ DiskUtilityDebugMenu }}"
+  when: "'\"advanced-image-options\" = {{ DiskUtilityDebugMenu }}' not in appledefaults.stdout"
+
+###############################################################################
+# Mac App Store                                                               #
+###############################################################################
+
+- name: "Enable the WebKit Developer Tools in the Mac App Store"
+  command: "defaults write com.apple.appstore WebKitDeveloperExtras -int {{ AppStoreWebKitDeveloperExtras }}"
+  when: "'WebKitDeveloperExtras = {{ AppStoreWebKitDeveloperExtras }}' not in appledefaults.stdout"
+
+- name: "Enable Debug Menu in the Mac App Store"
+  command: "defaults write com.apple.appstore ShowDebugMenu -int {{ AppStoreShowDebugMenu }}"
+  when: "'ShowDebugMenu = {{ AppStoreShowDebugMenu }}' not in appledefaults.stdout"
+
+###############################################################################
+# Messages                                                                    #
+###############################################################################
+
+- name: "Disable automatic emoji substitution (i.e. use plain text smileys)"
+  command: 'defaults write com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "automaticEmojiSubstitutionEnablediMessage" -int {{ MessagesAutoEmojiSubstitution }}'
+  when: "'automaticEmojiSubstitutionEnablediMessage = {{ MessagesAutoEmojiSubstitution }}' not in appledefaults.stdout"
+
+- name: "Disable smart quotes as it’s annoying for messages that contain code"
+  command: 'defaults write com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "automaticQuoteSubstitutionEnabled" -int {{ MessagesAutoQuoteSubstitution }}'
+  when: "'automaticQuoteSubstitutionEnabled = {{ MessagesAutoQuoteSubstitution }}' not in appledefaults.stdout"
+
+- name: "Disable continuous spell checking"
+  command: 'defaults write com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "continuousSpellCheckingEnabled" -int {{ MessagesSpellChecking }}'
+  when: "'continuousSpellCheckingEnabled = {{ MessagesSpellChecking }}' not in appledefaults.stdout"
+
+###############################################################################
+# Terminal                                                                    #
+###############################################################################
+
+- include: terminal.yml

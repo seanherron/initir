@@ -1,0 +1,22 @@
+---
+
+- name: Get list of keyboards
+  command: "/Applications/Karabiner.app/Contents/Library/bin/karabiner list"
+  register: karabiner_list
+  changed_when: false
+
+- name: Create Karabiner profile
+  command: "/Applications/Karabiner.app/Contents/Library/bin/karabiner append 'Microsoft Natural Keyboard Elite'"
+  when: "'Microsoft Natural Keyboard Elite' not in karabiner_list.stdout"
+
+- name: Set up Natural Keyboard
+  command: "/Applications/Karabiner.app/Contents/Library/bin/karabiner select_by_name 'Microsoft Natural Keyboard Elite'"
+  when: "'Microsoft Natural Keyboard Elite' not in karabiner_list.stdout"
+
+- name: Set up FN
+  command: "/Applications/Karabiner.app/Contents/Library/bin/karabiner set remap.pc_keyboard_function_standard 1"
+  when: "'Microsoft Natural Keyboard Elite' not in karabiner_list.stdout"
+
+- name: Set up Command Swap
+  command: "/Applications/Karabiner.app/Contents/Library/bin/karabiner set remap.optionL2commandL 1"
+  when: "'Microsoft Natural Keyboard Elite' not in karabiner_list.stdout"

@@ -1,0 +1,6 @@
+---
+- name: Ensure terminal directory exists
+  file: path=~/.terminal/base16 state=directory
+
+- name: Copy over the terminal settings file
+  copy: src=base16/base16-tomorrow-dark.terminal dest=~/.terminal/base16/base16-tomorrow-dark.terminal
